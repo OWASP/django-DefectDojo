@@ -2,6 +2,8 @@ __author__ = 'Jay Paz'
 import collections
 import logging
 from datetime import timedelta, datetime
+from functools import reduce
+
 from django import forms
 from django.apps import apps
 from auditlog.models import LogEntry
@@ -33,7 +35,7 @@ from dojo.finding.queries import get_authorized_findings
 from dojo.endpoint.queries import get_authorized_endpoints
 from dojo.finding_group.queries import get_authorized_finding_groups
 from django.forms import HiddenInput
-
+from dojo.tools.factory import get_disabled_scanners
 logger = logging.getLogger(__name__)
 
 local_tz = pytz.timezone(get_system_setting('time_zone'))
@@ -46,6 +48,15 @@ def custom_filter(queryset, name, value):
     values = value.split(',')
     filter = ('%s__in' % (name))
     return queryset.filter(Q(**{filter: values}))
+
+
+def manage_disabled_scanners():
+    disabled = get_disabled_scanners()
+    # this dirty/ugly as hell solution is to filter out scanners that are disabled, needs some refactory on design level
+    q_list = []
+    q_list = map(lambda n: Q(name__iexact=n), disabled)
+    q_list = reduce(lambda a, b: a | b, q_list)
+    return q_list
 
 
 def now():

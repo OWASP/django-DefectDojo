@@ -32,6 +32,7 @@ from dojo.risk_acceptance import api as ra_api
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from datetime import datetime
+
 from dojo.utils import get_period_counts_legacy, get_system_setting
 from dojo.api_v2 import serializers, permissions, prefetch, schema
 import dojo.jira_link.helper as jira_helper
@@ -44,6 +45,7 @@ from dojo.test.queries import get_authorized_tests, get_authorized_test_imports
 from dojo.finding.queries import get_authorized_findings, get_authorized_stub_findings
 from dojo.endpoint.queries import get_authorized_endpoints, get_authorized_endpoint_status
 from dojo.authorization.roles_permissions import Permissions, Roles
+from dojo.filters import manage_disabled_scanners
 
 logger = logging.getLogger(__name__)
 
@@ -1194,7 +1196,7 @@ class TestsViewSet(mixins.ListModelMixin,
                     "test_id": test, "files": files
             })
             return Response(serialized_files.data,
-                    status=status.HTTP_200_OK)
+                    status= status.HTTP_200_OK)
 
         return Response(serialized_files,
                 status=status.HTTP_200_OK)
@@ -1207,7 +1209,12 @@ class TestTypesViewSet(mixins.ListModelMixin,
                        mixins.CreateModelMixin,
                        viewsets.GenericViewSet):
     serializer_class = serializers.TestTypeSerializer
-    queryset = Test_Type.objects.all()
+    # This is just because at the begging tables are empty
+    try:
+        queryset = Test_Type.objects.all().exclude(manage_disabled_scanners())
+    except:
+        queryset = Test_Type.objects.all()
+
     filter_backends = (DjangoFilterBackend,)
     filter_fields = ('name',)
     permission_classes = (IsAuthenticated, DjangoModelPermissions)
@@ -1301,7 +1308,7 @@ class ToolTypesViewSet(mixins.ListModelMixin,
     serializer_class = serializers.ToolTypeSerializer
     queryset = Tool_Type.objects.all()
     filter_backends = (DjangoFilterBackend,)
-    filter_fields = ('id', 'name', 'description')
+    filter_fields = ('id', 'name', 'description', 'enabled')
     permission_classes = (IsAdminUser, DjangoModelPermissions)
 
 

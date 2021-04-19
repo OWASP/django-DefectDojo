@@ -1,6 +1,7 @@
 import os
 import re
 from datetime import datetime, date
+from functools import reduce
 from urllib.parse import urlsplit, urlunsplit
 import pickle
 from crispy_forms.bootstrap import InlineRadios, InlineCheckboxes
@@ -21,6 +22,7 @@ from django.utils.safestring import mark_safe
 from django.utils import timezone
 import tagulous
 
+from dojo.filters import manage_disabled_scanners
 from dojo.models import Finding, Finding_Group, Product_Type, Product, Note_Type, \
     Check_List, User, Engagement, Test, Test_Type, Notes, Risk_Acceptance, \
     Development_Environment, Dojo_User, Endpoint, Stub_Finding, Finding_Template, Report, FindingImage, \
@@ -32,7 +34,7 @@ from dojo.models import Finding, Finding_Group, Product_Type, Product, Note_Type
     ChoiceQuestion, General_Survey, Regulation, FileUpload, SEVERITY_CHOICES, Product_Type_Member, \
     Product_Member
 
-from dojo.tools.factory import requires_file, get_choices
+from dojo.tools.factory import requires_file, get_choices, get_disabled_scanners
 from dojo.user.helper import user_is_authorized
 from django.urls import reverse
 from tagulous.forms import TagField
@@ -434,6 +436,9 @@ class ImportScanForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super(ImportScanForm, self).__init__(*args, **kwargs)
+        self.SORTED_SCAN_TYPE_CHOICES = sorted(get_choices(), key=lambda x: x[1])
+        self.fields["scan_type"].choices = self.SORTED_SCAN_TYPE_CHOICES
+
 
     def clean(self):
         cleaned_data = super().clean()
@@ -762,9 +767,11 @@ class DeleteEngagementForm(forms.ModelForm):
 
 
 class TestForm(forms.ModelForm):
+
     title = forms.CharField(max_length=255, required=False)
     description = forms.CharField(widget=forms.Textarea(attrs={'rows': '3'}), required=False)
     test_type = forms.ModelChoiceField(queryset=Test_Type.objects.all().order_by('name'))
+
     environment = forms.ModelChoiceField(
         queryset=Development_Environment.objects.all().order_by('name'))
     # credential = forms.ModelChoiceField(Cred_User.objects.all(), required=False)
@@ -778,6 +785,8 @@ class TestForm(forms.ModelForm):
         required=False, label="Testing Lead")
 
     def __init__(self, *args, **kwargs):
+
+
         obj = None
 
         if 'engagement' in kwargs:
@@ -797,6 +806,8 @@ class TestForm(forms.ModelForm):
                 self.fields['lead'].queryset = get_authorized_users_for_product_and_product_type(None, product, Permissions.Product_View)
         else:
             self.fields['lead'].queryset = User.objects.exclude(is_staff=False)
+
+        self.fields['test_type'].queryset = Test_Type.objects.all().exclude(manage_disabled_scanners()).order_by('name')
 
     class Meta:
         model = Test
@@ -1910,12 +1921,14 @@ class ToolTypeForm(forms.ModelForm):
     class Meta:
         model = Tool_Type
         exclude = ['product']
+        fields = ['name', 'description', 'enabled']
 
 
 class RegulationForm(forms.ModelForm):
     class Meta:
         model = Regulation
         exclude = ['product']
+
 
 
 class LanguagesTypeForm(forms.ModelForm):

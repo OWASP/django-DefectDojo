@@ -1,5 +1,5 @@
 import logging
-from dojo.models import Test_Type
+from dojo.models import Test_Type, Tool_Type
 
 PARSERS = {}
 # TODO remove that
@@ -36,10 +36,23 @@ def import_parser_factory(file, test, active, verified, scan_type=None):
         raise ValueError(f'Unknown Test Type {scan_type}')
 
 
+def get_disabled_scanners():
+    scanners = []
+    try:
+        disabled = Tool_Type.objects.all().filter(enabled=False)
+        for scanner in disabled:
+            scanners.append(scanner.name.lower())
+    except Exception as e:
+        logging.warning("Empty Tool_Type table, run: ./manage dump_scanner_list -r")
+    return scanners
+
+
 def get_choices():
     res = list()
-    for key in PARSERS:
-        res.append((key, PARSERS[key].get_label_for_scan_types(key)))
+    disabled = get_disabled_scanners()
+    for key in PARSERS.keys():
+        if key.lower() not in disabled:
+            res.append((key, PARSERS[key].get_label_for_scan_types(key)))
     return tuple(res)
 
 
