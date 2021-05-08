@@ -3443,16 +3443,17 @@ class ChoiceAnswer(Answer):
 def enable_disable_auditlog(enable=True):
     if enable:
         # Register for automatic logging to database
-        logger.info('enabling audit logging')
-        auditlog.register(Dojo_User)
-        auditlog.register(Endpoint)
-        auditlog.register(Engagement)
-        auditlog.register(Finding)
-        auditlog.register(Product)
-        auditlog.register(Test)
-        auditlog.register(Risk_Acceptance)
-        auditlog.register(Finding_Template)
-        auditlog.register(Cred_User)
+#         logger.info('enabling audit logging')
+#         auditlog.register(Dojo_User)
+#         auditlog.register(Endpoint)
+#         auditlog.register(Engagement)
+#         auditlog.register(Finding)
+#         auditlog.register(Product)
+#         auditlog.register(Test)
+#         auditlog.register(Risk_Acceptance)
+#         auditlog.register(Finding_Template)
+#         auditlog.register(Cred_User)
+        pass
     else:
         logger.info('disabling audit logging')
         auditlog.unregister(Dojo_User)
@@ -3469,14 +3470,14 @@ def enable_disable_auditlog(enable=True):
 from dojo.utils import calculate_grade, get_system_setting, to_str_typed
 enable_disable_auditlog(enable=get_system_setting('enable_auditlog'))  # on startup choose safe to retrieve system settiung)
 
-tagulous.admin.register(Product.tags)
-tagulous.admin.register(Test.tags)
-tagulous.admin.register(Finding.tags)
-tagulous.admin.register(Engagement.tags)
-tagulous.admin.register(Endpoint.tags)
-tagulous.admin.register(Finding_Template.tags)
-tagulous.admin.register(App_Analysis.tags)
-tagulous.admin.register(Objects_Product.tags)
+# tagulous.admin.register(Product.tags)
+# tagulous.admin.register(Test.tags)
+# tagulous.admin.register(Finding.tags)
+# tagulous.admin.register(Engagement.tags)
+# tagulous.admin.register(Endpoint.tags)
+# tagulous.admin.register(Finding_Template.tags)
+# tagulous.admin.register(App_Analysis.tags)
+# tagulous.admin.register(Objects_Product.tags)
 
 # Benchmarks
 admin.site.register(Benchmark_Type)
