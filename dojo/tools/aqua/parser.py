@@ -57,26 +57,33 @@ def get_item(resource, vuln, test):
     score = 0
     severity_justification = ""
     used_for_classification = ""
-    if 'aqua_score' in vuln:
-        score = vuln.get('aqua_score')
-        used_for_classification = "Aqua score ({}) used for classification.\n".format(score)
-    if 'vendor_score' in vuln:
-        score = vuln.get('vendor_score')
-        used_for_classification = "Vendor score ({}) used for classification.\n".format(score)
-    if 'nvd_score' in vuln:
-        score = vuln.get('nvd_score')
-        used_for_classification = "NVD score v2 ({}) used for classification.\n".format(score)
-        severity_justification += "\nNVD v2 vectors: {}".format(vuln.get('nvd_vectors'))
-    if 'nvd_score_v3' in vuln:
-        score = vuln.get('nvd_score_v3')
-        used_for_classification = "NVD score v3 ({}) used for classification.\n".format(score)
-        severity_justification += "\nNVD v3 vectors: {}".format(vuln.get('nvd_vectors_v3'))
-        # Add the CVSS3 to Finding
-        cvssv3 = vuln.get('nvd_vectors_v3')
+    if 'aqua_severity' in vuln:
+        #Take Aqua severity as the real  element for the compute of severity
 
-    severity_justification += "\n{}".format(used_for_classification)
+        score = vuln.get ('aqua_severity')
+        severity = aqua_severity_of(score)
+        severity_justification = vuln.get('aqua_severity_classification')
 
-    severity = severity_of(score)
+    else:
+        if 'aqua_score' in vuln:
+            score = vuln.get('aqua_score')
+            used_for_classification = "Aqua score ({}) used for classification.\n".format(score)
+        if 'vendor_score' in vuln:
+            score = vuln.get('vendor_score')
+            used_for_classification = "Vendor score ({}) used for classification.\n".format(score)
+        if 'nvd_score' in vuln:
+            score = vuln.get('nvd_score')
+            used_for_classification = "NVD score v2 ({}) used for classification.\n".format(score)
+            severity_justification += "\nNVD v2 vectors: {}".format(vuln.get('nvd_vectors'))
+        if 'nvd_score_v3' in vuln:
+            score = vuln.get('nvd_score_v3')
+            used_for_classification = "NVD score v3 ({}) used for classification.\n".format(score)
+            severity_justification += "\nNVD v3 vectors: {}".format(vuln.get('nvd_vectors_v3'))
+            # Add the CVSS3 to Finding
+            cvssv3 = vuln.get('nvd_vectors_v3')
+
+        severity = severity_of(score)
+        severity_justification += "\n{}".format(used_for_classification)
 
     return Finding(
         title=cve + " - " + resource_name + " (" + resource_version + ") ",
@@ -118,7 +125,19 @@ def get_item_v2(item, test):
                    severity=severity,
                    impact=severity,
                    mitigation=mitigation)
+## Add a new severity map between defectdojo and aqua severity
 
+def aqua_severity_of (score):
+    if score == 'high':
+        return "High"
+    if score == 'medium':
+        return "Medium"
+    elif score == 'low':
+        return "Low"
+    elif score == "negligible":
+        return "Info"
+    else:
+        return "Critical"
 
 def severity_of(score):
     if score == 0:
